@@ -13,4 +13,8 @@
     <string name="menu_tools">Tools</string>
     <string name="menu_share">Share</string>
     <string name="menu_send">Send</string>
+    <string name="arjav_patni">Arjav Patni</string>
+    <string name="arjavpatni_hotmail_com">arjavpatni@hotmail.com</string>
+    <string name="login">LOGIN</string>
+    <string name="please_log_in" />
 </resources>
