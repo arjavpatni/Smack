@@ -1,4 +1,4 @@
-package com.arjavp.smack.ui
+package com.arjavp.smack.Controller
 
 import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
