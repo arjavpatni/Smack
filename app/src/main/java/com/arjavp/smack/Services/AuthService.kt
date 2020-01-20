@@ -2,6 +2,7 @@ package com.arjavp.smack.Services
 
 import android.app.DownloadManager
 import android.content.Context
+import android.provider.ContactsContract
 import android.util.Log
 import com.android.volley.Request
 import com.android.volley.Response
@@ -11,22 +12,22 @@ import com.arjavp.smack.Utlities.URL_REGISTER
 import org.json.JSONObject
 
 object AuthService {
-    fun registerUser(context: Context, email: String, password: String, complete: (Boolean) -> Unit){
-        val url = URL_REGISTER
 
-        val jsonBody = JSONObject()
-        jsonBody.put("email", email)
-        jsonBody.put("password", password)
+    fun registerUser(context: Context, email: String, password: String,complete : (Boolean)-> Unit){
+
+        val jsonBody : JSONObject
         val requestBody = jsonBody.toString()
+        jsonBody.put("email",email)
+        jsonBody.put("password", password)
 
-        val registerRequest = object : StringRequest(
-            Request.Method.POST, url, Response.Listener { _ ->
+
+        val registerRequest = object : StringRequest(Request.Method.POST, URL_REGISTER, Response.Listener {response ->
+            println(response)
             complete(true)
-        },  Response.ErrorListener { error ->
-                Log.d("ERROR", "Could not register user: $error")
-                complete(false)
-            })
-        {
+        }, Response.ErrorListener { error ->
+            Log.d("ERROR", "Could not register user.")
+            complete(false)
+        }){
             override fun getBodyContentType(): String {
                 return "application/json; charset=utf-8"
             }
@@ -35,7 +36,7 @@ object AuthService {
                 return requestBody.toByteArray()
             }
         }
-
         Volley.newRequestQueue(context).add(registerRequest)
-     }
+    }
+
 }
