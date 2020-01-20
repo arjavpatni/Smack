@@ -15,11 +15,11 @@ object AuthService {
 
     fun registerUser(context: Context, email: String, password: String,complete : (Boolean)-> Unit){
 
-        val jsonBody : JSONObject
-        val requestBody = jsonBody.toString()
+        val jsonBody : JSONObject()
+
         jsonBody.put("email",email)
         jsonBody.put("password", password)
-
+        val requestBody = jsonBody.toString()
 
         val registerRequest = object : StringRequest(Request.Method.POST, URL_REGISTER, Response.Listener {response ->
             println(response)

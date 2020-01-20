@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import com.arjavp.smack.R
+import com.arjavp.smack.Services.AuthService
 import kotlinx.android.synthetic.main.activity_create_user.*
 import kotlin.random.Random
 
@@ -33,7 +34,9 @@ class CreateUserActivity : AppCompatActivity() {
     }
 
     fun createUserClicked(view: View){
-
+        AuthService.registerUser(this, "ap@ap.com","qwerty"){ complete ->
+            if(complete){}
+        }
     }
 
     fun generateColorClicked(view: View){
