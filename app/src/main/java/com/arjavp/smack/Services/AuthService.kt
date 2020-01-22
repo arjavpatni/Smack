@@ -9,6 +9,7 @@ import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.arjavp.smack.Utlities.URL_CREATE
 import com.arjavp.smack.Utlities.URL_LOGIN
 import com.arjavp.smack.Utlities.URL_REGISTER
 import org.json.JSONException
@@ -76,6 +77,30 @@ object AuthService {
             }
         }
         Volley.newRequestQueue(context).add(loginRequest)
+    }
+
+    fun createUser(context: Context, name : String, email : String, avatarName: String, avatarColor: String, complete: (Boolean) -> Unit){
+
+        val jsonBody = JSONObject()
+        jsonBody.put("name", name)
+        jsonBody.put("email", email)
+        jsonBody.put("avatarName", avatarName)
+        jsonBody.put("avatarColor", avatarColor)
+        val requestBody = jsonBody.toString()
+
+        val createRequest = object : JsonObjectRequest(Method.POST, URL_CREATE,null, Response.Listener { response ->
+
+        },Response.ErrorListener {error->
+
+
+        }){
+            override fun getBodyContentType(): String {
+                return "application/json; charset=utf-8"
+            }
+            override fun getBody(): ByteArray {
+                return requestBody.toByteArray()
+            }
+        }
     }
 
 }
