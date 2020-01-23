@@ -90,8 +90,23 @@ object AuthService {
 
         val createRequest = object : JsonObjectRequest(Method.POST, URL_CREATE,null, Response.Listener { response ->
 
-        },Response.ErrorListener {error->
+            try {
 
+                UserDataService.name=response.getString("name")
+                UserDataService.email=response.getString("email")
+                UserDataService.avatarColor=response.getString("avatarColor")
+                UserDataService.avatarName=response.getString("avatarName")
+                UserDataService.id = response.getString("_id")
+                complete(true)
+
+            }catch (e:JSONException){
+                Log.d("JSON", "EXC "+e.localizedMessage)
+                complete(false)
+            }
+
+        },Response.ErrorListener {error->
+            Log.d("ERROR", "Could not add user. $error")
+            complete(false)
 
         }){
             override fun getBodyContentType(): String {
@@ -100,7 +115,15 @@ object AuthService {
             override fun getBody(): ByteArray {
                 return requestBody.toByteArray()
             }
+
+            override fun getHeaders(): MutableMap<String, String> {
+                val headers = HashMap<String, String>()
+                headers.put("Authorization","Bearer $authToken")
+                return headers
+            }
         }
+        Volley.newRequestQueue(context).add(createRequest)
     }
+
 
 }
