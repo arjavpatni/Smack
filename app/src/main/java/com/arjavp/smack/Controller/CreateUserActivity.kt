@@ -50,8 +50,7 @@ class CreateUserActivity : AppCompatActivity() {
                 if(registerSuccess){
                     AuthService.loginUser(this, email, password){ loginSuccess ->
                         if(loginSuccess){
-                            AuthService.createUser(this, userName, email, userAvatar, avatarColor){
-                                    createSuccess->
+                            AuthService.createUser(this, userName, email, userAvatar, avatarColor){ createSuccess->
                                 if(createSuccess){
                                     val userDataChange = Intent(BROADCAST_USER_DATA_CHANGE)
                                     LocalBroadcastManager.getInstance(this).sendBroadcast(userDataChange)
