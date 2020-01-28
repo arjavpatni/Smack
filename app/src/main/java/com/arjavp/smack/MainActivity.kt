@@ -26,10 +26,14 @@ import com.arjavp.smack.Controller.LoginActivity
 import com.arjavp.smack.Services.AuthService
 import com.arjavp.smack.Services.UserDataService
 import com.arjavp.smack.Utlities.BROADCAST_USER_DATA_CHANGE
+import com.arjavp.smack.Utlities.SOCKET_URL
+import io.socket.client.IO
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.nav_header_main.*
 
 class MainActivity : AppCompatActivity() {
+
+    val socket = IO.socket(SOCKET_URL)
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,9 +41,10 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
-        hideKeyboard()
-        LocalBroadcastManager.getInstance(this).registerReceiver(userDataChangeReceiver,
-            IntentFilter(BROADCAST_USER_DATA_CHANGE))
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            userDataChangeReceiver,
+            IntentFilter(BROADCAST_USER_DATA_CHANGE)
+        )
 
         val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
         val navView: NavigationView = findViewById(R.id.nav_view)
@@ -57,14 +62,39 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private val userDataChangeReceiver = object : BroadcastReceiver(){
+    override fun onResume() {
+        super.onResume()
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            userDataChangeReceiver,
+            IntentFilter(BROADCAST_USER_DATA_CHANGE)
+        )
+        socket.connect()
+    }
+
+    override fun onPause() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(userDataChangeReceiver)
+        super.onPause()
+    }
+
+    override fun onDestroy() {
+        socket.disconnect()
+        super.onDestroy()
+    }
+
+
+    private val userDataChangeReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (AuthService.isLoggedIn){
-                userNameNavHeader.text=UserDataService.name
-                userEmailNavHeader.text=UserDataService.email
-                val resourceId = resources.getIdentifier(UserDataService.avatarName,"drawable", packageName)
+            if (AuthService.isLoggedIn) {
+                userNameNavHeader.text = UserDataService.name
+                userEmailNavHeader.text = UserDataService.email
+                val resourceId =
+                    resources.getIdentifier(UserDataService.avatarName, "drawable", packageName)
                 userimageNavHeader.setImageResource(resourceId)
-                userimageNavHeader.setBackgroundColor(UserDataService.returnAvatarColor(UserDataService.avatarColor))
+                userimageNavHeader.setBackgroundColor(
+                    UserDataService.returnAvatarColor(
+                        UserDataService.avatarColor
+                    )
+                )
                 loginBtnNavHeader.text = "Logout"
             }
         }
@@ -76,29 +106,30 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        if(drawer_layout.isDrawerOpen(GravityCompat.START)) {
-                drawer_layout.closeDrawer(GravityCompat.START)
-            }else{
-                super.onBackPressed()
-            }
+        if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
+            drawer_layout.closeDrawer(GravityCompat.START)
+        } else {
+            super.onBackPressed()
+        }
     }
 
-    fun loginBtnNavClicked(view: View){
-        if(AuthService.isLoggedIn){
+    fun loginBtnNavClicked(view: View) {
+        if (AuthService.isLoggedIn) {
             UserDataService.logout()
-            userNameNavHeader.text=""
-            userEmailNavHeader.text=""
+            userNameNavHeader.text = ""
+            userEmailNavHeader.text = ""
             userimageNavHeader.setImageResource(R.drawable.profiledefault)
             userimageNavHeader.setBackgroundColor(Color.TRANSPARENT)
-            loginBtnNavHeader.text="Login"
-        }else{
+            loginBtnNavHeader.text = "Login"
+        } else {
             val loginIntent = Intent(this, LoginActivity::class.java)
             startActivity(loginIntent)
         }
     }
-    fun addChannelClicked(view: View){
+
+    fun addChannelClicked(view: View) {
         //display alert custom dialog. See dialog documentation.
-        if (AuthService.isLoggedIn){
+        if (AuthService.isLoggedIn) {
             val builder = AlertDialog.Builder(this)
             val dialogView = layoutInflater.inflate(R.layout.add_channel_dialog, null)
 
@@ -110,23 +141,26 @@ class MainActivity : AppCompatActivity() {
                     val channelName = nameTextField.text.toString()
                     val channelDesc = descTextField.text.toString()
 
-                    // Create channel with the channel name and description
-                    hideKeyboard()
-                }.setNegativeButton("Cancel"){dialogInterface, i->
+                    // Create channel with the channel name (from API code) and description(API code)
+                    socket.emit("newChannel", channelName, channelDesc)
+                }.setNegativeButton("Cancel") { dialogInterface, i ->
                     //cancel and close the dialog
-                    hideKeyboard()
+
                 }.show()
         }
     }
-    fun sendMsgBtnClicked(view: View){
 
+    fun sendMsgBtnClicked(view: View) {
+        hideKeyboard()
     }
-    fun hideKeyboard(){
+
+    fun hideKeyboard() {
         val inputManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         // casted an object into InputMethodManager
-        if(inputManager.isAcceptingText){
+        if (inputManager.isAcceptingText) {
             inputManager.hideSoftInputFromWindow(currentFocus?.windowToken, 0)
         }
 
     }
 }
+
