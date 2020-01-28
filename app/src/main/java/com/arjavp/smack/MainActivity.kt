@@ -23,11 +23,14 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.view.GravityCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.arjavp.smack.Controller.LoginActivity
+import com.arjavp.smack.Model.Channel
 import com.arjavp.smack.Services.AuthService
+import com.arjavp.smack.Services.MessageService
 import com.arjavp.smack.Services.UserDataService
 import com.arjavp.smack.Utlities.BROADCAST_USER_DATA_CHANGE
 import com.arjavp.smack.Utlities.SOCKET_URL
 import io.socket.client.IO
+import io.socket.emitter.Emitter
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.nav_header_main.*
 
@@ -45,6 +48,10 @@ class MainActivity : AppCompatActivity() {
             userDataChangeReceiver,
             IntentFilter(BROADCAST_USER_DATA_CHANGE)
         )
+        socket.connect()
+        //arguements from API index.js
+        socket.on("channelCreated", onNewChannel)
+        //Emitter Listener (OnNewChannel) is created below.
 
         val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
         val navView: NavigationView = findViewById(R.id.nav_view)
@@ -63,21 +70,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onResume() {
-        super.onResume()
         LocalBroadcastManager.getInstance(this).registerReceiver(
             userDataChangeReceiver,
             IntentFilter(BROADCAST_USER_DATA_CHANGE)
         )
-        socket.connect()
-    }
-
-    override fun onPause() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(userDataChangeReceiver)
-        super.onPause()
+        super.onResume()
     }
 
     override fun onDestroy() {
         socket.disconnect()
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(userDataChangeReceiver)
         super.onDestroy()
     }
 
@@ -148,6 +150,21 @@ class MainActivity : AppCompatActivity() {
 
                 }.show()
         }
+    }
+
+    private val onNewChannel = Emitter.Listener { args ->
+        //args is array list of type "Any" so we have to cast is as String.
+        //this listener its on a worker thread. We need to get back to main thread to update our UI
+        //following brings us back to main thread, visit Threads documentation to know more.
+        runOnUiThread {
+            val channelName = args[0] as String
+            val channelDescription = args[1] as String
+            val channelId = args[2] as String
+
+            val newChannel = Channel(channelName,channelDescription,channelId)
+            MessageService.channels.add(newChannel)
+        }
+        println(args[0] as String)
     }
 
     fun sendMsgBtnClicked(view: View) {
