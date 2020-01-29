@@ -26,6 +26,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.arjavp.smack.Controller.App
 import com.arjavp.smack.Controller.LoginActivity
 import com.arjavp.smack.Model.Channel
+import com.arjavp.smack.Model.Message
 import com.arjavp.smack.Services.AuthService
 import com.arjavp.smack.Services.MessageService
 import com.arjavp.smack.Services.UserDataService
@@ -60,10 +61,9 @@ class MainActivity : AppCompatActivity() {
             IntentFilter(BROADCAST_USER_DATA_CHANGE)
         )
         socket.connect()
-        //arguements from API index.js
-        socket.on("channelCreated", onNewChannel)
-        //Emitter Listener (OnNewChannel) is created below.
-
+        socket.on("channelCreated", onNewChannel)//arguements from API index.js
+        // Emitter Listener (OnNewChannel) is created below.
+        socket.on("messageCreated", onNewMessage)
         val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
         val navView: NavigationView = findViewById(R.id.nav_view)
         val navController = findNavController(R.id.nav_host_fragment)
@@ -79,8 +79,7 @@ class MainActivity : AppCompatActivity() {
         navView.setupWithNavController(navController)
         setupAdapters()
 
-        channel_list.setOnItemClickListener { _, _, position, _ ->
-            //underscore for parameters not used.
+        channel_list.setOnItemClickListener { _, _, position, _ -> //underscore for parameters not used.
             selectedChannel = MessageService.channels[position]
             drawer_layout.closeDrawer(GravityCompat.START)//to close the navigation drawer after channel is clicked
             updateWithChannel()
@@ -200,8 +199,34 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    //listener for messages. checkout io.emit(...) in index.js with event "messageCreated"
+    //for the variable positions in args arrayList.
+    private val onNewMessage = Emitter.Listener { args->
+        runOnUiThread{
+            val msgBody = args[0] as String
+            val channelId = args[2] as String
+            val userName = args[3] as String
+            val userAvatar = args[4] as String
+            val userAvatarColor = args[5] as String
+            val id = args[6] as String
+            val timeStamp = args[7] as String
+
+            val newMessage = Message(msgBody, userName, channelId, userAvatar, userAvatarColor, id, timeStamp)
+            MessageService.messages.add(newMessage)
+        }
+    }
+
     fun sendMsgBtnClicked(view: View) {
-        hideKeyboard()
+        //make sure isLoggedIn, channel is selected, text field is not empty
+        if(App.prefs.isLoggedIn && messageTextField.text.isNotEmpty() && selectedChannel !=null){
+            val userId = UserDataService.id
+            val channelId = selectedChannel!!.id
+            //see paramters for emit from API code index.js
+            socket.emit("newMessage", messageTextField.text.toString(), userId, channelId,
+                UserDataService.name, UserDataService.avatarName, UserDataService.avatarColor)
+            messageTextField.text.clear()
+            hideKeyboard()
+        }
     }
 
     fun hideKeyboard() {
