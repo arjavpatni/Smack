@@ -34,12 +34,14 @@ import com.arjavp.smack.Utlities.SOCKET_URL
 import io.socket.client.IO
 import io.socket.emitter.Emitter
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.content_main.*
 import kotlinx.android.synthetic.main.nav_header_main.*
 
 class MainActivity : AppCompatActivity() {
 
     val socket = IO.socket(SOCKET_URL)
     lateinit var channelAdapter: ArrayAdapter<Channel>
+    var selectedChannel : Channel? = null
 
     //creating an adapter for channel ListView
     private fun setupAdapters(){
@@ -77,6 +79,13 @@ class MainActivity : AppCompatActivity() {
         navView.setupWithNavController(navController)
         setupAdapters()
 
+        channel_list.setOnItemClickListener { _, _, position, _ ->
+            //underscore for parameters not used.
+            selectedChannel = MessageService.channels[position]
+            drawer_layout.closeDrawer(GravityCompat.START)//to close the navigation drawer after channel is clicked
+            updateWithChannel()
+        }
+
         if (App.prefs.isLoggedIn){
             AuthService.findUserByEmail(this){}
         }
@@ -111,19 +120,24 @@ class MainActivity : AppCompatActivity() {
                     )
                 )
                 loginBtnNavHeader.text = "Logout"
-                MessageService.getChannels(context){ complete ->
+                MessageService.getChannels{ complete ->
                     if(complete){
-                        //to notify the adapter that data set has changed and reload the listView
-                        channelAdapter.notifyDataSetChanged()
+                        if(MessageService.channels.count()>0){
+                           selectedChannel = MessageService.channels[0]
+                            //to notify the adapter that data set has changed and reload the listView
+                            channelAdapter.notifyDataSetChanged()
+                            updateWithChannel()
+                        }
                     }
                 }
             }
         }
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        val navController = findNavController(R.id.nav_host_fragment)
-        return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
+    fun updateWithChannel(){
+        //changing text view in main activity from Please LogIn to channel name.
+        mainChannelName.text="#${selectedChannel?.name}"
+        //download messages with channel.
     }
 
     override fun onBackPressed() {
@@ -155,7 +169,7 @@ class MainActivity : AppCompatActivity() {
             val dialogView = layoutInflater.inflate(R.layout.add_channel_dialog, null)
 
             builder.setView(dialogView)
-                .setPositiveButton("Add") { dialogInterface, i ->
+                .setPositiveButton("Add") { _, _ ->
                     //perform logic when clicked
                     val nameTextField = dialogView.findViewById<EditText>(R.id.addChannelNameTxt)
                     val descTextField = dialogView.findViewById<EditText>(R.id.addChannelDescTxt)
@@ -164,7 +178,7 @@ class MainActivity : AppCompatActivity() {
 
                     // Create channel with the channel name (from API code) and description(API code)
                     socket.emit("newChannel", channelName, channelDesc)
-                }.setNegativeButton("Cancel") { dialogInterface, i ->
+                }.setNegativeButton("Cancel") { _, _ ->
                     //cancel and close the dialog
 
                 }.show()
