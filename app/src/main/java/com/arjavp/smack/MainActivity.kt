@@ -134,9 +134,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun updateWithChannel(){
-        //changing text view in main activity from Please LogIn to channel name.
         mainChannelName.text="#${selectedChannel?.name}"
-        //download messages with channel.
+        //changing text view in main activity from Please LogIn to channel name.
+        if(selectedChannel != null){
+            MessageService.getMessages(selectedChannel!!.id){complete ->
+                if(complete){
+                }
+            }
+        }//download messages with channel.
     }
 
     override fun onBackPressed() {
@@ -188,31 +193,36 @@ class MainActivity : AppCompatActivity() {
         //args is array list of type "Any" so we have to cast is as String.
         //this listener its on a worker thread. We need to get back to main thread to update our UI
         //following brings us back to main thread, visit Threads documentation to know more.
-        runOnUiThread {
-            val channelName = args[0] as String
-            val channelDescription = args[1] as String
-            val channelId = args[2] as String
+        if(App.prefs.isLoggedIn){
+            runOnUiThread {
+                val channelName = args[0] as String
+                val channelDescription = args[1] as String
+                val channelId = args[2] as String
 
-            val newChannel = Channel(channelName,channelDescription,channelId)
-            MessageService.channels.add(newChannel)
-            channelAdapter.notifyDataSetChanged()
+                val newChannel = Channel(channelName,channelDescription,channelId)
+                MessageService.channels.add(newChannel)
+                channelAdapter.notifyDataSetChanged()
+            }
         }
     }
-
     //listener for messages. checkout io.emit(...) in index.js with event "messageCreated"
     //for the variable positions in args arrayList.
     private val onNewMessage = Emitter.Listener { args->
-        runOnUiThread{
-            val msgBody = args[0] as String
-            val channelId = args[2] as String
-            val userName = args[3] as String
-            val userAvatar = args[4] as String
-            val userAvatarColor = args[5] as String
-            val id = args[6] as String
-            val timeStamp = args[7] as String
+        if(App.prefs.isLoggedIn){
+            runOnUiThread{
+                val channelId = args[2] as String
+                if(channelId == selectedChannel?.id){
+                    val msgBody = args[0] as String
+                    val userName = args[3] as String
+                    val userAvatar = args[4] as String
+                    val userAvatarColor = args[5] as String
+                    val id = args[6] as String
+                    val timeStamp = args[7] as String
 
-            val newMessage = Message(msgBody, userName, channelId, userAvatar, userAvatarColor, id, timeStamp)
-            MessageService.messages.add(newMessage)
+                    val newMessage = Message(msgBody, userName, channelId, userAvatar, userAvatarColor, id, timeStamp)
+                    MessageService.messages.add(newMessage)
+                }
+            }
         }
     }
 
