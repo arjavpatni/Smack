@@ -1,4 +1,4 @@
-package com.arjavp.smack
+package com.arjavp.smack.Controller
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -8,7 +8,6 @@ import android.graphics.Color
 import android.os.Bundle
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import androidx.drawerlayout.widget.DrawerLayout
@@ -19,16 +18,14 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
 import android.widget.EditText
-import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.GravityCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.arjavp.smack.Adapters.MessageAdapter
-import com.arjavp.smack.Controller.App
-import com.arjavp.smack.Controller.LoginActivity
 import com.arjavp.smack.Model.Channel
 import com.arjavp.smack.Model.Message
+import com.arjavp.smack.R
 import com.arjavp.smack.Services.AuthService
 import com.arjavp.smack.Services.MessageService
 import com.arjavp.smack.Services.UserDataService
@@ -79,8 +76,12 @@ class MainActivity : AppCompatActivity() {
         // menu should be considered as top level destinations.
         appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow,
-                R.id.nav_tools, R.id.nav_share, R.id.nav_send
+                R.id.nav_home,
+                R.id.nav_gallery,
+                R.id.nav_slideshow,
+                R.id.nav_tools,
+                R.id.nav_share,
+                R.id.nav_send
             ), drawerLayout
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
