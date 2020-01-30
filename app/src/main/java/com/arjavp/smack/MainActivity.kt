@@ -23,6 +23,8 @@ import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.GravityCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.arjavp.smack.Adapters.MessageAdapter
 import com.arjavp.smack.Controller.App
 import com.arjavp.smack.Controller.LoginActivity
 import com.arjavp.smack.Model.Channel
@@ -42,13 +44,19 @@ class MainActivity : AppCompatActivity() {
 
     val socket = IO.socket(SOCKET_URL)
     lateinit var channelAdapter: ArrayAdapter<Channel>
+    lateinit var messageAdapter : MessageAdapter
     var selectedChannel : Channel? = null
 
     //creating an adapter for channel ListView
     private fun setupAdapters(){
         channelAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, MessageService.channels)
         channel_list.adapter = channelAdapter
-    }
+        messageAdapter = MessageAdapter(this, MessageService.messages)
+        messageListView.adapter = messageAdapter
+        val layoutManager = LinearLayoutManager(this)
+        messageListView.layoutManager = layoutManager
+    }//now when we download msgs, we need to notify message adapter that it needs to reload the data
+    //In updateWithChannel
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -139,6 +147,11 @@ class MainActivity : AppCompatActivity() {
         if(selectedChannel != null){
             MessageService.getMessages(selectedChannel!!.id){complete ->
                 if(complete){
+                    messageAdapter.notifyDataSetChanged()
+                    if (messageAdapter.itemCount >0){//way to get access to how many items are displayed
+                        messageListView.smoothScrollToPosition(messageAdapter.itemCount-1)
+                        //to see the latest(last) message always, use smoothScrollToPosition(last)
+                    }
                 }
             }
         }//download messages with channel.
@@ -155,6 +168,9 @@ class MainActivity : AppCompatActivity() {
     fun loginBtnNavClicked(view: View) {
         if (App.prefs.isLoggedIn) {
             UserDataService.logout()
+            channelAdapter.notifyDataSetChanged()
+            messageAdapter.notifyDataSetChanged()//to update view as logout() is called.
+            //message and channels are cleared with .clear() (in UserDataService)
             userNameNavHeader.text = ""
             userEmailNavHeader.text = ""
             userimageNavHeader.setImageResource(R.drawable.profiledefault)
@@ -221,6 +237,8 @@ class MainActivity : AppCompatActivity() {
 
                     val newMessage = Message(msgBody, userName, channelId, userAvatar, userAvatarColor, id, timeStamp)
                     MessageService.messages.add(newMessage)
+                    messageAdapter.notifyDataSetChanged()
+                    messageListView.smoothScrollToPosition(messageAdapter.itemCount-1)
                 }
             }
         }
