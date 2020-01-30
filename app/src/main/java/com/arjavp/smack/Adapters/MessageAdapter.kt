@@ -1,6 +1,7 @@
 package com.arjavp.smack.Adapters
 
 import android.content.Context
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,6 +11,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.arjavp.smack.Model.Message
 import com.arjavp.smack.R
 import com.arjavp.smack.Services.UserDataService
+import java.text.ParseException
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.collections.ArrayList
 
 //will take data from messages and bring it to RecyclerView to display (middleman)
 class MessageAdapter(val context: Context, val messages: ArrayList<Message>): RecyclerView.Adapter<MessageAdapter.ViewHolder>(){
@@ -25,8 +30,24 @@ class MessageAdapter(val context: Context, val messages: ArrayList<Message>): Re
             userImage?.setImageResource(resourceId)
             userImage?.setBackgroundColor(UserDataService.returnAvatarColor(message.userAvatarColor))
             userName?.text = message.userName
-            timeStamp?.text = message.timeStamp
+            timeStamp?.text = returnDateString(message.timeStamp)
             messageBody?.text = message.message
+        }
+
+        fun returnDateString(isoString: String) : String{
+            // 2017-09-11T01:16:13.858Z example of ISO86O1 date standard (from MongoDB)
+            //Monday 4:35 PM is required, google SimpleDateFormat for passing pattern below
+            val isoFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
+            isoFormatter.timeZone = TimeZone.getTimeZone("UTC")
+            //UTC: coordinated universal time (world's time standard)
+            var convertedDate = Date()
+            try{
+                convertedDate = isoFormatter.parse(isoString)
+            }catch(e: ParseException){
+                Log.d("PARSE","Cannot parse date.")
+            }
+            val outDateString = SimpleDateFormat("E, h:mm a", Locale.getDefault())
+            return outDateString.format(convertedDate)
         }
 
     }

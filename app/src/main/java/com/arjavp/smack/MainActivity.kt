@@ -87,6 +87,11 @@ class MainActivity : AppCompatActivity() {
         navView.setupWithNavController(navController)
         setupAdapters()
 
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            userDataChangeReceiver,
+            IntentFilter(BROADCAST_USER_DATA_CHANGE)
+        )
+
         channel_list.setOnItemClickListener { _, _, position, _ -> //underscore for parameters not used.
             selectedChannel = MessageService.channels[position]
             drawer_layout.closeDrawer(GravityCompat.START)//to close the navigation drawer after channel is clicked
@@ -98,20 +103,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onResume() {
-        LocalBroadcastManager.getInstance(this).registerReceiver(
-            userDataChangeReceiver,
-            IntentFilter(BROADCAST_USER_DATA_CHANGE)
-        )
-        super.onResume()
-    }
-
     override fun onDestroy() {
         socket.disconnect()
         LocalBroadcastManager.getInstance(this).unregisterReceiver(userDataChangeReceiver)
         super.onDestroy()
     }
-
 
     private val userDataChangeReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent?) {
@@ -176,6 +172,7 @@ class MainActivity : AppCompatActivity() {
             userimageNavHeader.setImageResource(R.drawable.profiledefault)
             userimageNavHeader.setBackgroundColor(Color.TRANSPARENT)
             loginBtnNavHeader.text = "Login"
+            mainChannelName.text = "Please Login"
         } else {
             val loginIntent = Intent(this, LoginActivity::class.java)
             startActivity(loginIntent)
